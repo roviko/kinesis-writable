@@ -83,14 +83,22 @@ function parseChunk(chunk) {
     chunk = chunk.toString();
   }
   if (typeof chunk === 'string') {
-    chunk = JSON.parse(chunk);
+    try {
+        chunk = JSON.parse(chunk);
+    } catch (error) {
+        throw 'chunk is not json';
+    }
   }
   return chunk;
 }
 
 KinesisStream.prototype._write = function(chunk, enc, next) {
-  chunk = parseChunk(chunk);
-
+  try {
+      chunk = parseChunk(chunk);
+  } catch (err) {
+      console.log(err);
+      return next();
+  }
   const hasPriority = this.hasPriority(chunk);
   if (hasPriority) {
     this.recordsQueue.unshift(chunk);
