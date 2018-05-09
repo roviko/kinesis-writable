@@ -96,7 +96,6 @@ KinesisStream.prototype._write = function(chunk, enc, next) {
   try {
       chunk = parseChunk(chunk);
   } catch (err) {
-      console.log(err);
       return next();
   }
   const hasPriority = this.hasPriority(chunk);
