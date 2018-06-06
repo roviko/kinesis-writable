@@ -79,11 +79,15 @@ function KinesisStream (params) {
 util.inherits(KinesisStream, Writable);
 
 function parseChunk(chunk) {
+  console.log(`-------------------------------> RAW Chunk ${chunk}`);
   if (Buffer.isBuffer(chunk) ) {
+    console.log(`-------------------------------> Buffer Chunk ${chunk}`);
     chunk = chunk.toString();
+    console.log(`-------------------------------> Buffer Chunk toString() ${chunk}`);
   }
   if (typeof chunk === 'string') {
     chunk = JSON.parse(chunk);
+    console.log(`-------------------------------> JSON Chunk ${chunk}`);
   }
   return chunk;
 }
@@ -103,9 +107,11 @@ KinesisStream.prototype._write = function(chunk, enc, next) {
   }
 
   if (this.recordsQueue.length >= this.buffer.length || hasPriority) {
+    console.log(`-------------------------------> Flush ${chunk}`);
     this.flush();
   } else {
     this.timer = setTimeout(this.flush.bind(this), this.buffer.timeout * 1000);
+    console.log(`-------------------------------> Attach timer ${chunk}`);
   }
 
   return next();
@@ -126,12 +132,14 @@ KinesisStream.prototype.dispatch = function(records, cb) {
   });
 
   operation.attempt(() => {
+    console.log('-------------------------------> attempt putRecords');
     this.putRecords(formattedRecords, (err) => {
       if (operation.retry(err)) {
         return;
       }
 
       if (err) {
+        console.log('-------------------------------> emitRecordError');
         this.emitRecordError(err, records);
       }
 
@@ -150,6 +158,7 @@ KinesisStream.prototype.putRecords = function(records, cb) {
 
   // remove all listeners which end up leaking
   req.on('complete', function() {
+    console.log('-------------------------------> req.on(complete');
     req.removeAllListeners();
     req.response.httpResponse.stream && req.response.httpResponse.stream.removeAllListeners();
     req.httpRequest.stream && req.httpRequest.stream.removeAllListeners();
